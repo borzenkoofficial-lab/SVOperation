@@ -33,10 +33,12 @@ jobs:
         with:
           ffmpeg-version: release
           linking-type: static
-      - name: Prepare CC0 audio assets
-        run: bash scripts/prepare-audio.sh
       - name: Validate OBJ weapon source mesh
         run: python scripts/verify-obj.py
+      - name: Validate Geran game aircraft mesh
+        run: python scripts/verify-geran.py
+      - name: Prepare CC0 audio assets
+        run: bash scripts/prepare-audio.sh
       - name: Build
         run: gradle --no-daemon --stacktrace clean build
       - name: Verify distributable JAR
