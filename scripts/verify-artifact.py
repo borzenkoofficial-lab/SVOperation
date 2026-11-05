@@ -16,6 +16,7 @@ REQUIRED = {
 "assets/svoperation/models/obj/sv01.obj","assets/svoperation/models/obj/sv01.mtl",
 "assets/svoperation/models/obj/geran.obj","assets/svoperation/models/obj/geran.mtl",
 "assets/svoperation/models/item/geran_controller.json",
+"assets/svoperation/textures/entity/geran.png",
 "assets/svoperation/textures/item/sv01.png",
 "assets/svoperation/textures/item/sv01_metal.png","assets/svoperation/textures/item/sv01_polymer.png","assets/svoperation/textures/item/sv01_detail.png",
 "assets/svoperation/models/item/sv01.json",
@@ -54,6 +55,11 @@ def main():
             fail("packaged Geran mesh has insufficient geometry")
         if "usemtl composite" not in geran_obj or "usemtl dark" not in geran_obj or "usemtl edge" not in geran_obj:
             fail("packaged Geran material groups are missing")
+        geran_texture = jar.read("assets/svoperation/textures/entity/geran.png")
+        if not geran_texture.startswith(b"\x89PNG\r\n\x1a\n") or len(geran_texture) < 1024:
+            fail("Geran diffuse texture is not a valid PNG")
+        if struct.unpack(">II", geran_texture[16:24]) != (512, 512):
+            fail("Geran diffuse texture must be 512x512")
         geran_mtl = jar.read("assets/svoperation/models/obj/geran.mtl").decode("utf-8")
         for material in ("composite", "dark", "edge"):
             if f"newmtl {material}" not in geran_mtl:
