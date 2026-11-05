@@ -28,17 +28,16 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.8'
-      - name: Set up FFmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v3
-        with:
-          ffmpeg-version: release
-          linking-type: static
       - name: Validate OBJ weapon source mesh
         run: python scripts/verify-obj.py
       - name: Validate Geran game aircraft mesh
         run: python scripts/verify-geran.py
       - name: Compile Java sources
         run: gradle --no-daemon compileJava
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
       - name: Prepare CC0 audio assets
         run: bash scripts/prepare-audio.sh
       - name: Build
