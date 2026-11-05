@@ -1,11 +1,14 @@
 newmtl metal
-Kd 0.22 0.24 0.25
+Kd 1.0 1.0 1.0
 Ns 80
+map_Kd sv01_metal.png
 
 newmtl polymer
-Kd 0.10 0.11 0.12
+Kd 1.0 1.0 1.0
 Ns 24
+map_Kd sv01_polymer.png
 
 newmtl detail
-Kd 0.38 0.40 0.41
+Kd 1.0 1.0 1.0
 Ns 48
+map_Kd sv01_detail.png
