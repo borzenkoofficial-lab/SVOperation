@@ -8,6 +8,7 @@ REQUIRED = {
 "ru/svoperation/SVOperation.class","ru/svoperation/item/SV01RifleItem.class",
 "ru/svoperation/registry/SVItems.class","ru/svoperation/registry/SVSounds.class",
 "ru/svoperation/client/SV01RifleRenderer.class","ru/svoperation/client/SVClientEvents.class",
+"ru/svoperation/model/ObjModel.class","ru/svoperation/model/ObjModelLoader.class",
 "ru/svoperation/model/SV01RifleModel.class",
 "assets/svoperation/geo/sv01.geo.json","assets/svoperation/animations/sv01.animation.json",
 "assets/svoperation/models/obj/sv01.obj","assets/svoperation/models/obj/sv01.mtl",
@@ -45,8 +46,14 @@ def main():
         obj = jar.read("assets/svoperation/models/obj/sv01.obj").decode("utf-8")
         if sum(1 for line in obj.splitlines() if line.startswith("f ")) < 100:
             fail("packaged OBJ weapon mesh has insufficient polygon geometry")
-        if "usemtl metal" not in obj or "usemtl polymer" not in obj:
+        if "usemtl metal" not in obj or "usemtl polymer" not in obj or "usemtl detail" not in obj:
             fail("packaged OBJ material groups are missing")
+        mtl = jar.read("assets/svoperation/models/obj/sv01.mtl").decode("utf-8")
+        for material in ("metal", "polymer", "detail"):
+            if f"newmtl {material}" not in mtl:
+                fail(f"MTL material is missing: {material}")
+        if len(re.findall(r"^Kd\\s+", mtl, re.MULTILINE)) < 3:
+            fail("MTL diffuse color definitions are incomplete")
         geo = read_json(jar, "assets/svoperation/geo/sv01.geo.json")
         geometry = geo.get("minecraft:geometry", [])
         if not geometry or not geometry[0].get("bones"):
