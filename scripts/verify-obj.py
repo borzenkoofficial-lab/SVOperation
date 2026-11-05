@@ -16,7 +16,7 @@ for number,raw in enumerate(path.read_text(encoding="utf-8").splitlines(),1):
  elif tag=="usemtl" and len(p)>1: materials.add(p[1])
  elif tag=="f":
   if len(p)<4: raise SystemExit(f"Invalid face at line {number}")
-  faces+=1;triangles+=len(p)-3
+  faces+=1;triangles+=len(p)-2
   for ref in p[1:]:
    parts=ref.split("/")
    for slot,values in ((0,positions),(1,uvs),(2,normals)):
