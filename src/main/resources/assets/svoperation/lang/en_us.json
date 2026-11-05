@@ -1,5 +1,8 @@
 {
-  "item.svoperation.sv01": "SV-01 Rifle",
-  "item.svoperation.rifle_ammo": "Rifle Ammunition",
-  "itemGroup.svoperation": "SVOperation"
+ "item.svoperation.sv01":"SV-01 Rifle",
+ "item.svoperation.rifle_ammo":"Rifle Ammunition",
+ "itemGroup.svoperation":"SVOperation",
+ "subtitles.svoperation.sv01_fire":"SV-01 fires",
+ "subtitles.svoperation.sv01_reload":"SV-01 reloads",
+ "subtitles.svoperation.sv01_bolt":"SV-01 bolt cycles"
 }

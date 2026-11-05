@@ -1,19 +1,15 @@
 name: SVOperation Build
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
   group: svoperation-build-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   build:
     name: Build Forge mod
@@ -22,45 +18,44 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
           cache: gradle
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.8'
-
-      - name: Show build environment
+      - name: Install audio conversion tools
         run: |
-          java -version
-          gradle --version
-
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+      - name: Prepare CC0 audio assets
+        run: bash scripts/prepare-audio.sh
       - name: Build
         run: gradle --no-daemon --stacktrace clean build
-
-      - name: Verify JAR output
+      - name: Verify mod JAR
         shell: bash
         run: |
           shopt -s nullglob
-          jars=(build/libs/*.jar)
+          jars=(build/libs/*-all.jar)
           if [ "${#jars[@]}" -ne 1 ]; then
-            echo "Expected exactly one mod JAR, found ${#jars[@]}"
-            printf '%s\n' "${jars[@]}"
+            echo "Expected one Jar-in-Jar artifact, found ${#jars[@]}"
+            printf '%s\n' build/libs/*.jar
             exit 1
           fi
           test -s "${jars[0]}"
-          echo "Verified artifact: ${jars[0]}"
+          unzip -l "${jars[0]}" | grep -q 'META-INF/jarjar/metadata.json'
+          unzip -l "${jars[0]}" | grep -q 'assets/svoperation/geo/sv01.geo.json'
+          unzip -l "${jars[0]}" | grep -q 'assets/svoperation/sounds/sv01/fire_01.ogg'
+          echo "Verified self-contained mod artifact: ${jars[0]}"
           ls -lh "${jars[0]}"
-
       - name: Upload mod JAR
         uses: actions/upload-artifact@v4
         with:
           name: SVOperation-${{ github.sha }}
-          path: build/libs/*.jar
+          path: build/libs/*-all.jar
           if-no-files-found: error
           retention-days: 14

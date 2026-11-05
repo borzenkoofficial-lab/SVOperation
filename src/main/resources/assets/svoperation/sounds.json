@@ -1,0 +1,8 @@
+{
+ "sv01_fire":{"subtitle":"subtitles.svoperation.sv01_fire","sounds":[
+  {"name":"svoperation:sv01/fire_01","weight":1,"volume":1.0},
+  {"name":"svoperation:sv01/fire_02","weight":1,"volume":1.0}
+ ]},
+ "sv01_reload":{"subtitle":"subtitles.svoperation.sv01_reload","sounds":[{"name":"svoperation:sv01/reload","volume":0.9}]},
+ "sv01_bolt":{"subtitle":"subtitles.svoperation.sv01_bolt","sounds":[{"name":"svoperation:sv01/bolt","volume":0.8}]}
+}

@@ -1,5 +1,8 @@
 {
-  "item.svoperation.sv01": "Винтовка СВ-01",
-  "item.svoperation.rifle_ammo": "Винтовочные патроны",
-  "itemGroup.svoperation": "SVOperation"
+ "item.svoperation.sv01":"Винтовка СВ-01",
+ "item.svoperation.rifle_ammo":"Винтовочные патроны",
+ "itemGroup.svoperation":"SVOperation",
+ "subtitles.svoperation.sv01_fire":"Выстрел СВ-01",
+ "subtitles.svoperation.sv01_reload":"Перезарядка СВ-01",
+ "subtitles.svoperation.sv01_bolt":"Затвор СВ-01"
 }
