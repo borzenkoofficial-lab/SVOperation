@@ -19,12 +19,12 @@ import ru.svoperation.model.ObjModelLoader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
-/** Client-only OBJ item renderer with lightweight client-side weapon action poses. */
+/** Client-only OBJ item renderer with per-material diffuse textures and weapon action poses. */
 @OnlyIn(Dist.CLIENT)
 public final class SV01RifleRenderer extends BlockEntityWithoutLevelRenderer {
     private static final ResourceLocation OBJ = ResourceLocation.fromNamespaceAndPath(SVOperation.MOD_ID, "models/obj/sv01.obj");
     private static final ResourceLocation MTL = ResourceLocation.fromNamespaceAndPath(SVOperation.MOD_ID, "models/obj/sv01.mtl");
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(SVOperation.MOD_ID, "textures/item/sv01.png");
+    private static final ResourceLocation FALLBACK_TEXTURE = ResourceLocation.fromNamespaceAndPath(SVOperation.MOD_ID, "textures/item/sv01.png");
     private static volatile ObjModel cachedModel;
     private static volatile long fireStartedAt;
     private static volatile long reloadStartedAt;
@@ -54,10 +54,11 @@ public final class SV01RifleRenderer extends BlockEntityWithoutLevelRenderer {
         for (ObjModel.MeshPart part : model.parts()) {
             poseStack.pushPose();
             applyPartAnimation(part.name(), poseStack);
-            VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
-            PoseStack.Pose pose = poseStack.last();
             ObjModel.Material material = model.materials().get(part.material());
-            int color = material == null ? fallbackColor(part.material()) : material.argb();
+            ResourceLocation texture = textureFor(material);
+            VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
+            PoseStack.Pose pose = poseStack.last();
+            int color = material == null ? 0xFFFFFFFF : material.argb();
             int end = part.firstVertex() + part.vertexCount();
             for (int i = part.firstVertex(); i < end; i++) {
                 ObjModel.Vertex vertex = model.vertices().get(i);
@@ -69,6 +70,16 @@ public final class SV01RifleRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.popPose();
         }
         poseStack.popPose();
+    }
+
+    private static ResourceLocation textureFor(ObjModel.Material material) {
+        if (material == null || material.diffuseMap() == null || material.diffuseMap().isBlank()) {
+            return FALLBACK_TEXTURE;
+        }
+        String file = material.diffuseMap().trim().replace('\\', '/');
+        // MTL maps are deliberately restricted to generated texture file names.
+        if (!file.matches("[A-Za-z0-9_.-]+") || file.contains("..")) return FALLBACK_TEXTURE;
+        return ResourceLocation.fromNamespaceAndPath(SVOperation.MOD_ID, "textures/item/" + file);
     }
 
     private static void applyItemTransform(ItemDisplayContext context, PoseStack pose) {
@@ -156,14 +167,6 @@ public final class SV01RifleRenderer extends BlockEntityWithoutLevelRenderer {
         return startedAt == 0L ? -1.0 : (System.nanoTime() - startedAt) / 1_000_000_000.0;
     }
 
-    private static int fallbackColor(String material) {
-        return switch (material) {
-            case "polymer" -> 0xFFB8B8B8;
-            case "detail" -> 0xFFD0D0D0;
-            default -> 0xFFFFFFFF;
-        };
-    }
-
     private static ObjModel getModel() {
         ObjModel model = cachedModel;
         if (model != null) return model;
@@ -176,7 +179,7 @@ public final class SV01RifleRenderer extends BlockEntityWithoutLevelRenderer {
                  var objReader = new InputStreamReader(objStream, StandardCharsets.UTF_8);
                  var mtlReader = new InputStreamReader(mtlStream, StandardCharsets.UTF_8)) {
                 cachedModel = ObjModelLoader.parse(objReader, mtlReader);
-                SVOperation.LOGGER.info("Loaded SV-01 OBJ mesh: {} vertices, {} parts, {} materials",
+                SVOperation.LOGGER.info("Loaded SV-01 OBJ mesh: {} vertices, {} parts, {} materials; per-material diffuse maps enabled",
                         cachedModel.vertices().size(), cachedModel.parts().size(), cachedModel.materials().size());
                 return cachedModel;
             } catch (Exception exception) {
