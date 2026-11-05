@@ -79,3 +79,105 @@ publishing {
  publications { register('mavenJava', MavenPublication) { artifact jar } }
  repositories { maven { url = layout.buildDirectory.dir('repo') } }
 }
+
+// Generate deterministic, tile-friendly diffuse maps with the JDK only.
+// No external Python/Pillow dependency is required for local Windows builds.
+def weaponTextureOutput = layout.buildDirectory.dir('generated/resources/weaponTextures')
+sourceSets.main.resources.srcDir(weaponTextureOutput)
+tasks.register('generateWeaponTextures') {
+ outputs.dir(weaponTextureOutput)
+ doLast {
+  def outputDir = weaponTextureOutput.get().dir('assets/svoperation/textures/item').asFile
+  outputDir.mkdirs()
+  def createTexture = { String kind, int seed ->
+   int size = 256
+   def image = new java.awt.image.BufferedImage(size, size, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+   for (int y = 0; y < size; y++) {
+    for (int x = 0; x < size; x++) {
+     long hash = (((long) x) * 73856093L) ^ (((long) y) * 19349663L) ^ (((long) seed) * 83492791L)
+     hash ^= (hash >>> 13)
+     hash *= 1274126177L
+     int noise = (int) ((hash >>> 24) & 0xFFL) - 128
+     double wave = 0.0D
+     int base, r, g, b
+     if (kind == 'metal') {
+      base = 48
+      wave = 2.4D * Math.sin(y * 0.72D) + 0.8D * Math.sin(y * 2.2D)
+      int line = (y % 64 == 0) ? -8 : ((y % 64 == 1) ? 4 : 0)
+      base += line
+      r = base + (int)(noise * 0.035D + wave)
+      g = base + 3 + (int)(noise * 0.035D + wave)
+      b = base + 5 + (int)(noise * 0.035D + wave)
+      if ((x % 64 == 32 || x % 64 == 33) && (y % 64 == 32 || y % 64 == 33)) { r -= 13; g -= 13; b -= 13 }
+     } else if (kind == 'polymer') {
+      base = 27
+      wave = 1.2D * Math.sin(x * 1.7D + y * 0.55D) + 0.8D * Math.sin(y * 1.9D - x * 0.3D)
+      int rib = (y % 32 == 0) ? -3 : 0
+      r = base - 2 + rib + (int)(noise * 0.045D + wave)
+      g = base + rib + (int)(noise * 0.045D + wave)
+      b = base + 2 + rib + (int)(noise * 0.045D + wave)
+     } else {
+      base = 57
+      wave = 1.1D * Math.sin(x * 0.18D) * Math.sin(y * 0.18D)
+      int groove = (x % 64 == 0 || y % 64 == 0) ? -5 : 0
+      r = base - 3 + groove + (int)(noise * 0.04D + wave)
+      g = base + groove + (int)(noise * 0.04D + wave)
+      b = base + 2 + groove + (int)(noise * 0.04D + wave)
+     }
+     r = Math.max(0, Math.min(255, r)); g = Math.max(0, Math.min(255, g)); b = Math.max(0, Math.min(255, b))
+     int argb = (int) (0xFF000000L | ((long) r << 16) | ((long) g << 8) | (long) b)
+     image.setRGB(x, y, argb)
+    }
+   }
+   // Blend opposite borders so repeated UV edges do not produce a hard seam.
+   for (int k = 0; k < 6; k++) {
+    for (int i = 0; i < size; i++) {
+     int left = image.getRGB(k, i), right = image.getRGB(size - 1 - k, i)
+     int top = image.getRGB(i, k), bottom = image.getRGB(i, size - 1 - k)
+     int lr = (((left >>> 16) & 255) + ((right >>> 16) & 255)) / 2
+     int lg = (((left >>> 8) & 255) + ((right >>> 8) & 255)) / 2
+     int lb = ((left & 255) + (right & 255)) / 2
+     int tr = (((top >>> 16) & 255) + ((bottom >>> 16) & 255)) / 2
+     int tg = (((top >>> 8) & 255) + ((bottom >>> 8) & 255)) / 2
+     int tb = ((top & 255) + (bottom & 255)) / 2
+     int lrArgb = (int) (0xFF000000L | ((long) lr << 16) | ((long) lg << 8) | (long) lb)
+     int tbArgb = (int) (0xFF000000L | ((long) tr << 16) | ((long) tg << 8) | (long) tb)
+     image.setRGB(k, i, lrArgb)
+     image.setRGB(size - 1 - k, i, lrArgb)
+     image.setRGB(i, k, tbArgb)
+     image.setRGB(i, size - 1 - k, tbArgb)
+    }
+   }
+   javax.imageio.ImageIO.write(image, 'png', new File(outputDir, "sv01_${kind}.png"))
+  }
+  createTexture('metal', 11)
+  createTexture('polymer', 22)
+  createTexture('detail', 33)
+
+  // Dedicated low-contrast airframe finish for Geran, generated without external assets.
+  def geranDir = layout.buildDirectory.dir('generated/resources/weaponTextures/assets/svoperation/textures/entity').get().asFile
+  geranDir.mkdirs()
+  int geranSize = 512
+  def geranImage = new java.awt.image.BufferedImage(geranSize, geranSize, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+  for (int y = 0; y < geranSize; y++) {
+   for (int x = 0; x < geranSize; x++) {
+    long hash = (((long) x) * 73856093L) ^ (((long) y) * 19349663L) ^ 0x6A09E667F3BCC909L
+    hash ^= (hash >>> 13); hash *= 1274126177L
+    int noise = (int)((hash >>> 24) & 0xFFL) - 128
+    int cell = (x.intdiv(32) + y.intdiv(32) * 3) % 7
+    int camo = [0, 3, -2, 5, -4, 1, -1][cell]
+    int seam = ((x % 128 == 0 || y % 128 == 0) ? -10 : 0) + ((x % 128 == 1 || y % 128 == 1) ? 3 : 0)
+    int panel = ((x % 128 > 4 && x % 128 < 7) && (y % 128 > 4 && y % 128 < 7)) ? -14 : 0
+    int base = 54 + camo + seam + panel + (int)(noise * 0.055D)
+    int red = Math.max(0, Math.min(255, base - 2))
+    int green = Math.max(0, Math.min(255, base))
+    int blue = Math.max(0, Math.min(255, base + 2))
+    geranImage.setRGB(x, y, (int)(0xFF000000L | ((long)red << 16) | ((long)green << 8) | (long)blue))
+   }
+  }
+  javax.imageio.ImageIO.write(geranImage, 'png', new File(geranDir, 'geran.png'))
+ }
+}
+tasks.named('processResources').configure {
+ dependsOn(tasks.named('generateWeaponTextures'))
+}

@@ -4,12 +4,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** Dependency-free Wavefront OBJ/MTL reader. Faces are triangulated for GPU upload. */
 public final class ObjModelLoader {
+    private static final float UV_WORLD_SCALE = 1.0F / 2.5F;
     private ObjModelLoader() {}
 
     public static ObjModel parse(Reader source) throws IOException {
@@ -25,6 +28,8 @@ public final class ObjModelLoader {
         List<Ref> faceRefs = new ArrayList<>();
         String object = "default", material = "default";
         int partStart = 0;
+        boolean uvDecisionMade = false;
+        boolean generatePlanarUvs = false;
         try (BufferedReader reader = new BufferedReader(source)) {
             String line;
             int lineNumber = 0;
@@ -48,6 +53,10 @@ public final class ObjModelLoader {
                         }
                         case "f" -> {
                             if (tokens.length < 4) throw new IllegalArgumentException("face has fewer than 3 vertices");
+                            if (!uvDecisionMade) {
+                                generatePlanarUvs = !hasUsableUvLayout(uvs);
+                                uvDecisionMade = true;
+                            }
                             faceRefs.clear();
                             for (int i = 1; i < tokens.length; i++) {
                                 String[] refs = tokens[i].split("/", -1);
@@ -63,9 +72,9 @@ public final class ObjModelLoader {
                             float[] faceNormal = cross(sub(b, a), sub(c, a));
                             normalize(faceNormal);
                             for (int i = 1; i < faceRefs.size() - 1; i++) {
-                                emit(output, faceRefs.get(0), positions, uvs, normals, faceNormal);
-                                emit(output, faceRefs.get(i), positions, uvs, normals, faceNormal);
-                                emit(output, faceRefs.get(i + 1), positions, uvs, normals, faceNormal);
+                                emit(output, faceRefs.get(0), positions, uvs, normals, faceNormal, generatePlanarUvs);
+                                emit(output, faceRefs.get(i), positions, uvs, normals, faceNormal, generatePlanarUvs);
+                                emit(output, faceRefs.get(i + 1), positions, uvs, normals, faceNormal, generatePlanarUvs);
                             }
                         }
                         default -> { /* mtllib, smoothing groups and free-form surfaces are intentionally ignored */ }
@@ -79,6 +88,15 @@ public final class ObjModelLoader {
         if (output.isEmpty()) throw new IOException("OBJ contains no renderable faces");
         Map<String, ObjModel.Material> materials = materialLibrary == null ? Map.of() : parseMaterials(materialLibrary);
         return new ObjModel(output, parts, materials);
+    }
+
+    private static boolean hasUsableUvLayout(List<float[]> uvs) {
+        Set<String> unique = new HashSet<>();
+        for (float[] uv : uvs) {
+            unique.add(Float.floatToIntBits(uv[0]) + ":" + Float.floatToIntBits(uv[1]));
+            if (unique.size() >= 16) return true;
+        }
+        return false;
     }
 
     public static Map<String, ObjModel.Material> parseMaterials(Reader source) throws IOException {
@@ -120,10 +138,36 @@ public final class ObjModelLoader {
         return end;
     }
     private record Ref(int position, int uv, int normal) {}
-    private static void emit(List<ObjModel.Vertex> out, Ref ref, List<float[]> p, List<float[]> uv, List<float[]> n, float[] fallback) {
-        float[] pos=p.get(ref.position), tex=ref.uv>=0?uv.get(ref.uv):new float[]{0,0}, normal=ref.normal>=0?n.get(ref.normal):fallback;
-        out.add(new ObjModel.Vertex(pos[0],pos[1],pos[2],tex[0],1-tex[1],normal[0],normal[1],normal[2]));
+    private static void emit(List<ObjModel.Vertex> out, Ref ref, List<float[]> p, List<float[]> uv,
+                             List<float[]> n, float[] fallback, boolean generatePlanarUvs) {
+        float[] pos = p.get(ref.position);
+        float[] normal = ref.normal >= 0 ? n.get(ref.normal) : fallback;
+        float[] tex = generatePlanarUvs ? planarUv(pos, normal)
+                : (ref.uv >= 0 ? uv.get(ref.uv) : planarUv(pos, normal));
+        out.add(new ObjModel.Vertex(pos[0], pos[1], pos[2], tex[0], 1 - tex[1],
+                normal[0], normal[1], normal[2]));
     }
+
+    /**
+     * The original SV-01 mesh repeats only four UV corners on every polygon.
+     * Generate a stable world-space planar projection instead of stretching the
+     * complete diffuse image over each face. The 2.5-unit projection bounds cover
+     * the authored weapon mesh without requiring texture coordinates in the OBJ.
+     */
+    private static float[] planarUv(float[] position, float[] normal) {
+        float ax = Math.abs(normal[0]), ay = Math.abs(normal[1]), az = Math.abs(normal[2]);
+        if (ax >= ay && ax >= az) {
+            return new float[]{(position[2] + 1.25F) * UV_WORLD_SCALE,
+                    (position[1] + 1.25F) * UV_WORLD_SCALE};
+        }
+        if (ay >= az) {
+            return new float[]{(position[0] + 1.25F) * UV_WORLD_SCALE,
+                    (position[2] + 1.25F) * UV_WORLD_SCALE};
+        }
+        return new float[]{(position[0] + 1.25F) * UV_WORLD_SCALE,
+                (position[1] + 1.25F) * UV_WORLD_SCALE};
+    }
+
     private static float[] vector(String[] t,int start,int size) {
         if(t.length<start+size) throw new IllegalArgumentException("incomplete vector");
         float[] v=new float[size]; for(int i=0;i<size;i++) v[i]=Float.parseFloat(t[start+i]); return v;

@@ -1,8 +1,15 @@
 {
- "item.svoperation.sv01":"Винтовка СВ-01",
- "item.svoperation.rifle_ammo":"Винтовочные патроны",
- "itemGroup.svoperation":"SVOperation",
- "subtitles.svoperation.sv01_fire":"Выстрел СВ-01",
- "subtitles.svoperation.sv01_reload":"Перезарядка СВ-01",
- "subtitles.svoperation.sv01_bolt":"Затвор СВ-01"
+  "item.svoperation.sv01": "Винтовка СВ-01",
+  "item.svoperation.rifle_ammo": "Винтовочные патроны",
+  "itemGroup.svoperation": "SVOperation",
+  "subtitles.svoperation.sv01_fire": "Выстрел СВ-01",
+  "subtitles.svoperation.sv01_reload": "Перезарядка СВ-01",
+  "subtitles.svoperation.sv01_bolt": "Затвор СВ-01",
+  "item.svoperation.geran_controller": "Пульт БПЛА «Герань»",
+  "message.svoperation.geran_cancelled": "Выбор точки отменён",
+  "message.svoperation.geran_too_far": "Точка слишком далеко (лимит 128 блоков)",
+  "message.svoperation.geran_waypoint_set": "Точка выбрана: %1$s, %2$s, %3$s. Нажмите ПКМ в воздухе для запуска",
+  "message.svoperation.geran_select_point": "Сначала выберите точку: ПКМ по блоку",
+  "message.svoperation.geran_invalid_point": "Точка недоступна или слишком далеко",
+  "message.svoperation.geran_launched": "БПЛА запущен"
 }
