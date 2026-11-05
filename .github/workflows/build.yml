@@ -18,6 +18,7 @@ jobs:
   build:
     name: Build Forge mod
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,14 +28,34 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+          cache: gradle
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.8'
 
+      - name: Show build environment
+        run: |
+          java -version
+          gradle --version
+
       - name: Build
-        run: gradle --no-daemon clean build
+        run: gradle --no-daemon --stacktrace clean build
+
+      - name: Verify JAR output
+        shell: bash
+        run: |
+          shopt -s nullglob
+          jars=(build/libs/*.jar)
+          if [ "${#jars[@]}" -ne 1 ]; then
+            echo "Expected exactly one mod JAR, found ${#jars[@]}"
+            printf '%s\n' "${jars[@]}"
+            exit 1
+          fi
+          test -s "${jars[0]}"
+          echo "Verified artifact: ${jars[0]}"
+          ls -lh "${jars[0]}"
 
       - name: Upload mod JAR
         uses: actions/upload-artifact@v4
