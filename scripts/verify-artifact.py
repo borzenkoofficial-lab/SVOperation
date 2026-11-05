@@ -7,7 +7,8 @@ REQUIRED = {
 "META-INF/mods.toml","META-INF/jarjar/metadata.json",
 "ru/svoperation/SVOperation.class","ru/svoperation/item/SV01RifleItem.class",
 "ru/svoperation/registry/SVItems.class","ru/svoperation/registry/SVSounds.class",
-"ru/svoperation/client/SV01RifleRenderer.class","ru/svoperation/model/SV01RifleModel.class",
+"ru/svoperation/client/SV01RifleRenderer.class","ru/svoperation/client/SVClientEvents.class",
+"ru/svoperation/model/SV01RifleModel.class",
 "assets/svoperation/geo/sv01.geo.json","assets/svoperation/animations/sv01.animation.json",
 "assets/svoperation/textures/item/sv01.png","assets/svoperation/models/item/sv01.json",
 "assets/svoperation/sounds.json","assets/svoperation/lang/ru_ru.json","assets/svoperation/lang/en_us.json",
@@ -41,19 +42,29 @@ def main():
         if not re.search(r'modId="geckolib"\s*\n\s*mandatory=true', mods):
             fail("mods.toml does not declare mandatory GeckoLib dependency")
         geo = read_json(jar, "assets/svoperation/geo/sv01.geo.json")
-        if not geo.get("minecraft:geometry") or not geo["minecraft:geometry"][0].get("bones"):
+        geometry = geo.get("minecraft:geometry", [])
+        if not geometry or not geometry[0].get("bones"):
             fail("GeckoLib geometry has no bones")
+        cube_count = sum(len(bone.get("cubes", [])) for bone in geometry[0]["bones"])
+        if cube_count < 30:
+            fail(f"weapon geometry is too simple: {cube_count} cubes (minimum 30)")
         animations = read_json(jar, "assets/svoperation/animations/sv01.animation.json").get("animations", {})
         if not {"animation.sv01.fire", "animation.sv01.reload"}.issubset(animations):
             fail("fire/reload animation clips are missing")
+        item_model = read_json(jar, "assets/svoperation/models/item/sv01.json")
+        display = item_model.get("display", {})
+        if not {"firstperson_righthand", "thirdperson_righthand"}.issubset(display):
+            fail("first/third-person item transforms are missing")
+        if display["firstperson_righthand"].get("rotation") != [0, 0, 0]:
+            fail("first-person rifle axis is not aligned with the view")
         sounds = read_json(jar, "assets/svoperation/sounds.json")
         if not {"sv01_fire", "sv01_reload", "sv01_bolt"}.issubset(sounds):
             fail("one or more sound events are missing")
         png = jar.read("assets/svoperation/textures/item/sv01.png")
         if not png.startswith(b"\x89PNG\r\n\x1a\n") or len(png) < 24:
             fail("weapon texture is not a valid PNG")
-        if struct.unpack(">II", png[16:24]) != (64, 64):
-            fail("weapon texture must be 64x64")
+        if struct.unpack(">II", png[16:24]) != (512, 512):
+            fail("weapon texture must be 512x512")
         metadata = read_json(jar, "META-INF/jarjar/metadata.json")
         gecko = next((x for x in metadata.get("jars", [])
                       if x.get("identifier", {}).get("group") == "software.bernie.geckolib"), None)
@@ -82,7 +93,7 @@ def main():
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     Path(str(path) + ".sha256").write_text(f"{digest}  {path.name}\n", encoding="ascii")
     print(f"Verified {path.name}: {path.stat().st_size} bytes")
-    print(f"Verified {len(REQUIRED)} required entries, compiled classes, Jar-in-Jar, JSON, texture and Vorbis audio")
+    print(f"Verified {len(REQUIRED)} required entries, detailed geometry, transforms, classes, Jar-in-Jar, JSON, texture and Vorbis audio")
     print("SHA-256: " + digest)
 
 if __name__ == "__main__":

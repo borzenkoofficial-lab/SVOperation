@@ -11,6 +11,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -34,6 +35,7 @@ import java.util.function.Consumer;
 
 public final class SV01RifleItem extends Item implements GeoItem {
  public static final int MAGAZINE_CAPACITY = 30;
+ private static final int USE_DURATION = 72_000;
  private static final double RANGE = 48.0D;
  private static final float DAMAGE = 7.0F;
  private static final int COOLDOWN_TICKS = 10;
@@ -67,20 +69,40 @@ public final class SV01RifleItem extends Item implements GeoItem {
  }
 
  @Override
+ public UseAnim getUseAnimation(ItemStack stack) {
+  return UseAnim.CROSSBOW;
+ }
+
+ @Override
+ public int getUseDuration(ItemStack stack, LivingEntity entity) {
+  return USE_DURATION;
+ }
+
+ @Override
  public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
   ItemStack rifle = player.getItemInHand(hand);
   if (player.isShiftKeyDown()) {
    if (!level.isClientSide && level instanceof ServerLevel serverLevel) reload(serverLevel, player, rifle);
    return InteractionResultHolder.sidedSuccess(rifle, level.isClientSide);
   }
+  if (player.getCooldowns().isOnCooldown(this)) return InteractionResultHolder.fail(rifle);
   if (!player.getAbilities().instabuild && getRounds(rifle) <= 0) return InteractionResultHolder.fail(rifle);
-  if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
-   if (!player.getAbilities().instabuild) rifle.setDamageValue(rifle.getDamageValue() + 1);
-   triggerAnim(player, GeoItem.getOrAssignId(rifle, serverLevel), "weapon", "fire");
-   fire(serverLevel, player);
-   player.getCooldowns().addCooldown(this, COOLDOWN_TICKS);
-  }
-  return InteractionResultHolder.sidedSuccess(rifle, level.isClientSide);
+
+  // Hold right mouse to shoulder the rifle; releasing it fires one shot.
+  player.startUsingItem(hand);
+  return InteractionResultHolder.consume(rifle);
+ }
+
+ @Override
+ public void releaseUsing(ItemStack rifle, Level level, LivingEntity entity, int timeLeft) {
+  if (!(entity instanceof Player player) || level.isClientSide || !(level instanceof ServerLevel serverLevel)) return;
+  if (player.getCooldowns().isOnCooldown(this)) return;
+  if (!player.getAbilities().instabuild && getRounds(rifle) <= 0) return;
+
+  if (!player.getAbilities().instabuild) rifle.setDamageValue(rifle.getDamageValue() + 1);
+  triggerAnim(player, GeoItem.getOrAssignId(rifle, serverLevel), "weapon", "fire");
+  fire(serverLevel, player);
+  player.getCooldowns().addCooldown(this, COOLDOWN_TICKS);
  }
 
  private static int getRounds(ItemStack rifle) {
