@@ -38,6 +38,7 @@ repositories {
 }
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${minecraft_version}:${geckolib_version}")
     jarJar(group: 'software.bernie.geckolib', name: "geckolib-forge-${minecraft_version}", version: geckolib_version_range) {
         jarJar.pin(it, geckolib_version)
     }
@@ -68,7 +69,7 @@ tasks.named('jar', Jar).configure {
             'Implementation-Title': project.name,
             'Implementation-Version': project.jar.archiveVersion,
             'Implementation-Vendor': mod_authors,
-            'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ')
+            'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
 }
