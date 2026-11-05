@@ -153,6 +153,29 @@ tasks.register('generateWeaponTextures') {
   createTexture('metal', 11)
   createTexture('polymer', 22)
   createTexture('detail', 33)
+
+  // Dedicated low-contrast airframe finish for Geran, generated without external assets.
+  def geranDir = layout.buildDirectory.dir('generated/resources/weaponTextures/assets/svoperation/textures/entity').get().asFile
+  geranDir.mkdirs()
+  int geranSize = 512
+  def geranImage = new java.awt.image.BufferedImage(geranSize, geranSize, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+  for (int y = 0; y < geranSize; y++) {
+   for (int x = 0; x < geranSize; x++) {
+    long hash = (((long) x) * 73856093L) ^ (((long) y) * 19349663L) ^ 0x6A09E667F3BCC909L
+    hash ^= (hash >>> 13); hash *= 1274126177L
+    int noise = (int)((hash >>> 24) & 0xFFL) - 128
+    int cell = ((x / 32) + (y / 32) * 3) % 7
+    int camo = [0, 3, -2, 5, -4, 1, -1][cell]
+    int seam = ((x % 128 == 0 || y % 128 == 0) ? -10 : 0) + ((x % 128 == 1 || y % 128 == 1) ? 3 : 0)
+    int panel = ((x % 128 > 4 && x % 128 < 7) && (y % 128 > 4 && y % 128 < 7)) ? -14 : 0
+    int base = 54 + camo + seam + panel + (int)(noise * 0.055D)
+    int red = Math.max(0, Math.min(255, base - 2))
+    int green = Math.max(0, Math.min(255, base))
+    int blue = Math.max(0, Math.min(255, base + 2))
+    geranImage.setRGB(x, y, (int)(0xFF000000L | ((long)red << 16) | ((long)green << 8) | (long)blue))
+   }
+  }
+  javax.imageio.ImageIO.write(geranImage, 'png', new File(geranDir, 'geran.png'))
  }
 }
 tasks.named('processResources').configure {
