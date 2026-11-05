@@ -6,6 +6,8 @@ import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderPlayerEvent;
+import net.minecraftforge.client.event.EntityRenderersEvent;
+import ru.svoperation.registry.SVEntities;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import ru.svoperation.SVOperation;
@@ -18,6 +20,11 @@ import ru.svoperation.registry.SVItems;
 )
 public final class SVClientEvents {
  private SVClientEvents() {}
+
+ @SubscribeEvent
+ public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+  event.registerEntityRenderer(SVEntities.GERAN.get(), GeranRenderer::new);
+ }
 
  @SubscribeEvent
  public static void onPlayerRender(RenderPlayerEvent.Pre event) {
