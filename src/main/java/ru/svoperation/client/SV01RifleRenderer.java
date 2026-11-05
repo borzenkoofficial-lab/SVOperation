@@ -1,9 +1,110 @@
 package ru.svoperation.client;
 
-import ru.svoperation.item.SV01RifleItem;
-import ru.svoperation.model.SV01RifleModel;
-import software.bernie.geckolib.renderer.GeoItemRenderer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import org.slf4j.Logger;
+import ru.svoperation.SVOperation;
+import ru.svoperation.model.ObjModel;
+import ru.svoperation.model.ObjModelLoader;
 
-public final class SV01RifleRenderer extends GeoItemRenderer<SV01RifleItem> {
-    public SV01RifleRenderer() { super(new SV01RifleModel()); }
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+
+/** Client-only Wavefront OBJ item renderer for the SV-01 polygon mesh. */
+@OnlyIn(Dist.CLIENT)
+public final class SV01RifleRenderer extends BlockEntityWithoutLevelRenderer {
+    private static final ResourceLocation OBJ = ResourceLocation.fromNamespaceAndPath(SVOperation.MOD_ID, "models/obj/sv01.obj");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(SVOperation.MOD_ID, "textures/item/sv01.png");
+    private static volatile ObjModel cachedModel;
+
+    public SV01RifleRenderer() {
+        super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
+    }
+
+    @Override
+    public void renderByItem(ItemStack stack, ItemDisplayContext context, PoseStack poseStack,
+                             MultiBufferSource buffers, int packedLight, int packedOverlay) {
+        ObjModel model = getModel();
+        if (model == null) return;
+
+        poseStack.pushPose();
+        applyItemTransform(context, poseStack);
+        VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+        PoseStack.Pose pose = poseStack.last();
+
+        for (ObjModel.MeshPart part : model.parts()) {
+            int color = materialColor(part.material());
+            int end = part.firstVertex() + part.vertexCount();
+            for (int i = part.firstVertex(); i < end; i++) {
+                ObjModel.Vertex vertex = model.vertices().get(i);
+                consumer.addVertex(pose, vertex.x(), vertex.y(), vertex.z())
+                        .setColor(color)
+                        .setUv(vertex.u(), vertex.v())
+                        .setOverlay(packedOverlay)
+                        .setLight(packedLight)
+                        .setNormal(pose, vertex.nx(), vertex.ny(), vertex.nz());
+            }
+        }
+        poseStack.popPose();
+    }
+
+    private static void applyItemTransform(ItemDisplayContext context, PoseStack pose) {
+        switch (context) {
+            case GUI -> {
+                pose.translate(0.5F, 0.48F, 0.5F);
+                pose.mulPose(Axis.YP.rotationDegrees(135));
+                pose.mulPose(Axis.XP.rotationDegrees(18));
+                pose.scale(0.19F, 0.19F, 0.19F);
+            }
+            case GROUND, FIXED -> {
+                pose.translate(0.5F, 0.28F, 0.5F);
+                pose.mulPose(Axis.YP.rotationDegrees(90));
+                pose.scale(0.20F, 0.20F, 0.20F);
+            }
+            default -> {
+                pose.translate(0.5F, 0.38F, 0.5F);
+                pose.mulPose(Axis.YP.rotationDegrees(90));
+                pose.scale(0.22F, 0.22F, 0.22F);
+            }
+        }
+        // The source mesh is centered close to X=-0.15 and uses X as its barrel axis.
+        pose.translate(0.15F, 0.0F, 0.0F);
+    }
+
+    private static int materialColor(String material) {
+        return switch (material) {
+            case "polymer" -> 0xFFB8B8B8;
+            case "detail" -> 0xFFD0D0D0;
+            default -> 0xFFFFFFFF;
+        };
+    }
+
+    private static ObjModel getModel() {
+        ObjModel model = cachedModel;
+        if (model != null) return model;
+        synchronized (SV01RifleRenderer.class) {
+            if (cachedModel != null) return cachedModel;
+            try (var resource = Minecraft.getInstance().getResourceManager().getResource(OBJ).orElseThrow(
+                    () -> new IllegalStateException("Missing OBJ resource " + OBJ));
+                 var reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
+                cachedModel = ObjModelLoader.parse(reader);
+                SVOperation.LOGGER.info("Loaded SV-01 OBJ mesh: {} vertices, {} mesh parts",
+                        cachedModel.vertices().size(), cachedModel.parts().size());
+                return cachedModel;
+            } catch (Exception exception) {
+                SVOperation.LOGGER.error("Unable to load SV-01 OBJ model", exception);
+                return null;
+            }
+        }
+    }
 }
