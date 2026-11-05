@@ -54,3 +54,22 @@ The user previously supplied `gcr-1.3.2-BETA-1.21.1-neoforge.zip`. Earlier inspe
 ## Current runtime limitation
 
 Vanilla Forge item rendering does not automatically consume a full metallic/roughness/normal PBR set. Keep those maps as authoring sources; export a base-color texture for the runtime path unless a custom shader/material pipeline is implemented.
+
+
+## Candidate D — rigged high-poly weapon with explicit CC0
+
+**Stein Games — Free Sniper Rifle M700 CC0**
+
+- Source: https://stein-indie.itch.io/m700
+- Page states: FBX, 2048 px textures, skeletal mesh and skeleton intended for animation, CC0 1.0.
+- Candidate use: strongest documented rigging test among the reviewed Stein Games assets. Inspect skeleton hierarchy, pivots, animation compatibility and material packing before considering a port.
+- Limitation: this is a bolt-action sniper rifle, not the SV-01 assault-rifle silhouette. Use it to validate the high-poly + rig + texture import path, not as a drop-in SV-01 replacement.
+
+## Current priority order
+
+1. **M700 CC0** — validate whether a high-poly skeletal FBX can be normalized into our GeckoLib asset pipeline.
+2. **Classic Weapons Pack CC0** — evaluate assault-rifle silhouette and high-resolution textures for a possible base mesh.
+3. **FPS Asset Kit** — inspect shared rig structure and audio candidates; stylized weapon geometry is not the target look.
+4. **OpenGameArt 3D Gun Part 1** — lightweight GLTF/FBX/Blend interchange test only.
+
+The ordering is based on published format/license/rigging claims, not on a visual inspection of downloaded files. No model is approved for runtime yet.
