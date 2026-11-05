@@ -90,10 +90,12 @@ public final class SV01RifleRenderer extends BlockEntityWithoutLevelRenderer {
         if (model != null) return model;
         synchronized (SV01RifleRenderer.class) {
             if (cachedModel != null) return cachedModel;
-            try (var objResource = Minecraft.getInstance().getResourceManager().getResource(OBJ).orElseThrow();
-                 var mtlResource = Minecraft.getInstance().getResourceManager().getResource(MTL).orElseThrow();
-                 var objReader = new InputStreamReader(objResource.open(), StandardCharsets.UTF_8);
-                 var mtlReader = new InputStreamReader(mtlResource.open(), StandardCharsets.UTF_8)) {
+            var objResource = Minecraft.getInstance().getResourceManager().getResource(OBJ).orElseThrow();
+            var mtlResource = Minecraft.getInstance().getResourceManager().getResource(MTL).orElseThrow();
+            try (var objStream = objResource.open();
+                 var mtlStream = mtlResource.open();
+                 var objReader = new InputStreamReader(objStream, StandardCharsets.UTF_8);
+                 var mtlReader = new InputStreamReader(mtlStream, StandardCharsets.UTF_8)) {
                 cachedModel = ObjModelLoader.parse(objReader, mtlReader);
                 SVOperation.LOGGER.info("Loaded SV-01 OBJ mesh: {} vertices, {} parts, {} materials",
                         cachedModel.vertices().size(), cachedModel.parts().size(), cachedModel.materials().size());
