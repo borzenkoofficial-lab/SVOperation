@@ -1,8 +1,15 @@
 {
- "item.svoperation.sv01":"SV-01 Rifle",
- "item.svoperation.rifle_ammo":"Rifle Ammunition",
- "itemGroup.svoperation":"SVOperation",
- "subtitles.svoperation.sv01_fire":"SV-01 fires",
- "subtitles.svoperation.sv01_reload":"SV-01 reloads",
- "subtitles.svoperation.sv01_bolt":"SV-01 bolt cycles"
+  "item.svoperation.sv01": "SV-01 Rifle",
+  "item.svoperation.rifle_ammo": "Rifle Ammunition",
+  "itemGroup.svoperation": "SVOperation",
+  "subtitles.svoperation.sv01_fire": "SV-01 fires",
+  "subtitles.svoperation.sv01_reload": "SV-01 reloads",
+  "subtitles.svoperation.sv01_bolt": "SV-01 bolt cycles",
+  "item.svoperation.geran_controller": "Geran Drone Controller",
+  "message.svoperation.geran_cancelled": "Waypoint selection cancelled",
+  "message.svoperation.geran_too_far": "Waypoint is too far away (128-block limit)",
+  "message.svoperation.geran_waypoint_set": "Waypoint selected: %1$s, %2$s, %3$s. Right-click air to launch",
+  "message.svoperation.geran_select_point": "Select a waypoint first: right-click a block",
+  "message.svoperation.geran_invalid_point": "Waypoint is unavailable or too far away",
+  "message.svoperation.geran_launched": "Drone launched"
 }
