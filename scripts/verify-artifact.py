@@ -6,12 +6,16 @@ from pathlib import Path
 REQUIRED = {
 "META-INF/mods.toml","META-INF/jarjar/metadata.json",
 "ru/svoperation/SVOperation.class","ru/svoperation/item/SV01RifleItem.class",
-"ru/svoperation/registry/SVItems.class","ru/svoperation/registry/SVSounds.class",
+"ru/svoperation/registry/SVItems.class","ru/svoperation/registry/SVSounds.class","ru/svoperation/registry/SVEntities.class",
+"ru/svoperation/entity/GeranEntity.class","ru/svoperation/item/GeranControllerItem.class",
+"ru/svoperation/client/GeranRenderer.class","ru/svoperation/client/SVClientModEvents.class",
 "ru/svoperation/client/SV01RifleRenderer.class","ru/svoperation/client/SVClientEvents.class",
 "ru/svoperation/model/ObjModel.class","ru/svoperation/model/ObjModelLoader.class",
 "ru/svoperation/model/SV01RifleModel.class",
 "assets/svoperation/geo/sv01.geo.json","assets/svoperation/animations/sv01.animation.json",
 "assets/svoperation/models/obj/sv01.obj","assets/svoperation/models/obj/sv01.mtl",
+"assets/svoperation/models/obj/geran.obj","assets/svoperation/models/obj/geran.mtl",
+"assets/svoperation/models/item/geran_controller.json",
 "assets/svoperation/textures/item/sv01.png",
 "assets/svoperation/textures/item/sv01_metal.png","assets/svoperation/textures/item/sv01_polymer.png","assets/svoperation/textures/item/sv01_detail.png",
 "assets/svoperation/models/item/sv01.json",
@@ -45,6 +49,15 @@ def main():
             fail("mods.toml does not declare svoperation")
         if not re.search(r'modId="geckolib"\s*\n\s*mandatory=true', mods):
             fail("mods.toml does not declare mandatory GeckoLib dependency")
+        geran_obj = jar.read("assets/svoperation/models/obj/geran.obj").decode("utf-8")
+        if sum(1 for line in geran_obj.splitlines() if line.startswith("f ")) < 200:
+            fail("packaged Geran mesh has insufficient geometry")
+        if "usemtl composite" not in geran_obj or "usemtl dark" not in geran_obj or "usemtl edge" not in geran_obj:
+            fail("packaged Geran material groups are missing")
+        geran_mtl = jar.read("assets/svoperation/models/obj/geran.mtl").decode("utf-8")
+        for material in ("composite", "dark", "edge"):
+            if f"newmtl {material}" not in geran_mtl:
+                fail(f"Geran MTL material is missing: {material}")
         obj = jar.read("assets/svoperation/models/obj/sv01.obj").decode("utf-8")
         if sum(1 for line in obj.splitlines() if line.startswith("f ")) < 100:
             fail("packaged OBJ weapon mesh has insufficient polygon geometry")
@@ -117,7 +130,7 @@ def main():
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     Path(str(path) + ".sha256").write_text(f"{digest}  {path.name}\n", encoding="ascii")
     print(f"Verified {path.name}: {path.stat().st_size} bytes")
-    print(f"Verified {len(REQUIRED)} required entries, detailed geometry, transforms, classes, Jar-in-Jar, JSON, texture and Vorbis audio")
+    print(f"Verified {len(REQUIRED)} required entries, weapon and Geran geometry, transforms, classes, Jar-in-Jar, JSON, texture and Vorbis audio")
     print("SHA-256: " + digest)
 
 if __name__ == "__main__":
