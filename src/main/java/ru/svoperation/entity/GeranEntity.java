@@ -1,7 +1,6 @@
 package ru.svoperation.entity;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -11,10 +10,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.Explosion;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.network.NetworkHooks;
 
 /**
  * Fictional Minecraft scenario entity. Its waypoint is a block position in the
@@ -84,7 +81,7 @@ public final class GeranEntity extends Entity {
         if (level() instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY(), getZ(),
                     1, 0.0D, 0.0D, 0.0D, 0.0D);
-            serverLevel.playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE,
+            serverLevel.playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE.value(),
                     SoundSource.HOSTILE, 2.0F, 0.82F + random.nextFloat() * 0.18F);
             // In-game blast damages nearby entities but never edits terrain.
             serverLevel.explode(this, getX(), getY(), getZ(), 2.5F, Level.ExplosionInteraction.NONE);
@@ -102,10 +99,5 @@ public final class GeranEntity extends Entity {
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         setGameWaypoint(tag.getInt("TargetX"), tag.getInt("TargetY"), tag.getInt("TargetZ"));
-    }
-
-    @Override
-    public Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
     }
 }
