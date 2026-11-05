@@ -1,8 +1,11 @@
 package ru.svoperation;
 
 import com.mojang.logging.LogUtils;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
+import ru.svoperation.registry.SVItems;
 
 @Mod(SVOperation.MOD_ID)
 public final class SVOperation {
@@ -10,6 +13,8 @@ public final class SVOperation {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public SVOperation() {
-        LOGGER.info("SVOperation {} initialized", "0.1.0");
+        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+        SVItems.register(modBus);
+        LOGGER.info("SVOperation initialized");
     }
 }

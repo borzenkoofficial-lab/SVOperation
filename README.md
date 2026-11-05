@@ -1,51 +1,41 @@
 # SVOperation
 
-**SVOperation** — модификация для Minecraft Java Edition, посвящённая современной военной тематике и игровым сценариям Восточной Европы.
+A Minecraft Forge mod project for Minecraft Java Edition 1.21.1.
 
-> Проект находится на ранней стадии разработки. Наличие функции в плане не означает, что она уже реализована.
+## Current build
 
-## Техническая база
+The first playable development slice adds:
+- SV-01 rifle item;
+- rifle ammunition item;
+- a dedicated SVOperation creative tab;
+- Russian and English item names;
+- server-authoritative hitscan firing (48-block maximum range);
+- solid-block obstruction;
+- one ammunition item consumed per shot outside Creative mode;
+- a 10-tick firing cooldown.
 
-- Minecraft Java Edition: **1.21.1**
-- Mod loader: **Minecraft Forge 52.1.20**
-- Java: **21**
-- Build system: **Gradle / ForgeGradle**
-- Mod ID: `svoperation`
+The item icons currently reuse vanilla Minecraft textures as temporary placeholders. Original weapon art, 3D models, reload mechanics, additional weapons, vehicles, NPC factions and scenarios are not implemented yet.
 
-## Сборка
+## Requirements
 
-После установки JDK 21 и Gradle 8.8:
+- Minecraft Java Edition 1.21.1
+- Minecraft Forge 52.x
+- Java 21
+
+## Build
+
+Use Gradle 8.8 and Java 21:
 
 ```bash
-gradle build
+gradle --no-daemon clean build
 ```
 
-Готовый JAR появится в `build/libs/`.
+The mod JAR is generated in `build/libs/`.
 
-В GitHub Actions сборка запускается автоматически при push в `main` и при pull request. Успешная сборка публикует JAR как workflow artifact.
+## Install
 
-## Установка
+Copy the generated `.jar` into `.minecraft/mods` and launch the Forge 1.21.1 profile.
 
-1. Установить Minecraft Forge для версии 1.21.1.
-2. Скачать JAR из успешного GitHub Actions workflow или GitHub Release.
-3. Поместить JAR в папку `.minecraft/mods`.
-4. Запустить профиль Forge 1.21.1.
+## Development status
 
-## Структура проекта
-
-- `src/main/java` — Java-код мода.
-- `src/main/resources` — метаданные, локализация, модели, текстуры и звуки.
-- `docs/` — архитектура и дорожная карта.
-- `.github/workflows/` — CI-сборка.
-
-## Принципы разработки
-
-- Никаких заявлений о готовности без успешной сборки и проверок.
-- Каждая игровая функция добавляется отдельным проверяемым этапом.
-- Клиентские и серверные стороны должны быть разделены корректно.
-- Сетевые функции проектируются с учётом dedicated server.
-- Используются оригинальные или лицензированные ресурсы.
-
-## Статус
-
-**Bootstrap / 0.x** — начальная инфраструктура проекта. Игровой контент ещё не реализован.
+This is an early development build. CI compilation does not replace in-game client and dedicated-server testing. See [docs/ROADMAP.md](docs/ROADMAP.md).
