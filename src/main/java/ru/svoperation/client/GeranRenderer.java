@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets;
 public final class GeranRenderer extends EntityRenderer<GeranEntity> {
     private static final ResourceLocation OBJ = ResourceLocation.fromNamespaceAndPath(SVOperation.MOD_ID, "models/obj/geran.obj");
     private static final ResourceLocation MTL = ResourceLocation.fromNamespaceAndPath(SVOperation.MOD_ID, "models/obj/geran.mtl");
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(SVOperation.MOD_ID, "textures/item/sv01.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(SVOperation.MOD_ID, "textures/entity/geran.png");
     private static volatile ObjModel cachedModel;
 
     public GeranRenderer(EntityRendererProvider.Context context) {
