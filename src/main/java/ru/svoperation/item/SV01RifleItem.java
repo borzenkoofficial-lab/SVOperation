@@ -84,7 +84,8 @@ public final class SV01RifleItem extends Item implements GeoItem {
  public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
   ItemStack rifle = player.getItemInHand(hand);
   if (player.isShiftKeyDown()) {
-   if (!level.isClientSide && level instanceof ServerLevel serverLevel) reload(serverLevel, player, rifle);
+   if (level.isClientSide) SV01RifleRenderer.triggerReload();
+   else if (level instanceof ServerLevel serverLevel) reload(serverLevel, player, rifle);
    return InteractionResultHolder.sidedSuccess(rifle, level.isClientSide);
   }
   if (player.getCooldowns().isOnCooldown(this)) return InteractionResultHolder.fail(rifle);
@@ -100,7 +101,11 @@ public final class SV01RifleItem extends Item implements GeoItem {
 
  @Override
  public void releaseUsing(ItemStack rifle, Level level, LivingEntity entity, int timeLeft) {
-  if (!(entity instanceof Player player) || level.isClientSide || !(level instanceof ServerLevel serverLevel)) return;
+  if (level.isClientSide) {
+   if (entity instanceof Player) SV01RifleRenderer.triggerFire();
+   return;
+  }
+  if (!(entity instanceof Player player) || !(level instanceof ServerLevel serverLevel)) return;
   if (player.getCooldowns().isOnCooldown(this)) return;
   if (!player.getAbilities().instabuild && getRounds(rifle) <= 0) return;
 

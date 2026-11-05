@@ -19,16 +19,28 @@ import ru.svoperation.model.ObjModelLoader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
-/** Client-only OBJ item renderer. Material Kd values tint the shared albedo texture. */
+/** Client-only OBJ item renderer with lightweight client-side weapon action poses. */
 @OnlyIn(Dist.CLIENT)
 public final class SV01RifleRenderer extends BlockEntityWithoutLevelRenderer {
     private static final ResourceLocation OBJ = ResourceLocation.fromNamespaceAndPath(SVOperation.MOD_ID, "models/obj/sv01.obj");
     private static final ResourceLocation MTL = ResourceLocation.fromNamespaceAndPath(SVOperation.MOD_ID, "models/obj/sv01.mtl");
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(SVOperation.MOD_ID, "textures/item/sv01.png");
     private static volatile ObjModel cachedModel;
+    private static volatile long fireStartedAt;
+    private static volatile long reloadStartedAt;
 
     public SV01RifleRenderer() {
         super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
+    }
+
+    /** Called on the client when the use action is released and a shot is requested. */
+    public static void triggerFire() {
+        fireStartedAt = System.nanoTime();
+    }
+
+    /** Called on the client when a reload command is requested. */
+    public static void triggerReload() {
+        reloadStartedAt = System.nanoTime();
     }
 
     @Override
@@ -38,9 +50,12 @@ public final class SV01RifleRenderer extends BlockEntityWithoutLevelRenderer {
         if (model == null) return;
         poseStack.pushPose();
         applyItemTransform(context, poseStack);
-        VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
-        PoseStack.Pose pose = poseStack.last();
+        applyActionPose(stack, context, poseStack);
         for (ObjModel.MeshPart part : model.parts()) {
+            poseStack.pushPose();
+            applyPartAnimation(part.name(), poseStack);
+            VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+            PoseStack.Pose pose = poseStack.last();
             ObjModel.Material material = model.materials().get(part.material());
             int color = material == null ? fallbackColor(part.material()) : material.argb();
             int end = part.firstVertex() + part.vertexCount();
@@ -51,6 +66,7 @@ public final class SV01RifleRenderer extends BlockEntityWithoutLevelRenderer {
                         .setOverlay(packedOverlay).setLight(packedLight)
                         .setNormal(pose, vertex.nx(), vertex.ny(), vertex.nz());
             }
+            poseStack.popPose();
         }
         poseStack.popPose();
     }
@@ -75,6 +91,69 @@ public final class SV01RifleRenderer extends BlockEntityWithoutLevelRenderer {
             }
         }
         pose.translate(0.15F, 0.0F, 0.0F);
+    }
+
+    private static void applyActionPose(ItemStack stack, ItemDisplayContext context, PoseStack pose) {
+        boolean handContext = context == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
+                || context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND
+                || context == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
+                || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
+        if (!handContext) return;
+
+        var player = Minecraft.getInstance().player;
+        if (player != null && player.isUsingItem() && player.getUseItem() == stack) {
+            pose.translate(0.0F, 0.018F, 0.0F);
+            pose.mulPose(Axis.ZP.rotationDegrees(1.1F));
+        }
+
+        double fireAge = ageSeconds(fireStartedAt);
+        if (fireAge >= 0.0 && fireAge < 0.22) {
+            float kick = (float) (Math.sin(Math.PI * Math.min(1.0, fireAge / 0.22)) * Math.exp(-fireAge * 8.0));
+            pose.translate(0.055F * kick, 0.0F, 0.075F * kick);
+            pose.mulPose(Axis.ZP.rotationDegrees(-4.0F * kick));
+        }
+
+        double reloadAge = ageSeconds(reloadStartedAt);
+        if (reloadAge >= 0.0 && reloadAge < 1.30) {
+            float lower = (float) Math.sin(Math.PI * Math.min(1.0, reloadAge / 1.30));
+            pose.translate(0.0F, -0.035F * lower, 0.0F);
+            pose.mulPose(Axis.ZP.rotationDegrees(2.4F * lower));
+        }
+    }
+
+    private static void applyPartAnimation(String partName, PoseStack pose) {
+        double reloadAge = ageSeconds(reloadStartedAt);
+        if ("magazine".equals(partName) && reloadAge >= 0.0 && reloadAge < 1.30) {
+            float out = ease(reloadAge, 0.16, 0.38);
+            float in = ease(reloadAge, 0.76, 1.02);
+            float travel = Math.max(0.0F, out - in);
+            pose.translate(-0.02F, -0.15F, 0.0F);
+            pose.mulPose(Axis.ZP.rotationDegrees(-7.0F * travel));
+            pose.translate(0.02F, 0.15F, 0.0F);
+            pose.translate(0.0F, -0.43F * travel, 0.025F * travel);
+        }
+
+        double fireAge = ageSeconds(fireStartedAt);
+        float bolt = 0.0F;
+        if (fireAge >= 0.0 && fireAge < 0.18) {
+            bolt = (float) (Math.sin(Math.PI * Math.min(1.0, fireAge / 0.18)) * Math.exp(-fireAge * 5.0));
+        } else if (reloadAge >= 0.0 && reloadAge < 1.30) {
+            bolt = ease(reloadAge, 0.96, 1.08) - ease(reloadAge, 1.12, 1.25);
+        }
+        if (("bolt_cover".equals(partName) || "charging_handle".equals(partName)) && bolt > 0.0F) {
+            pose.translate(0.10F * bolt, 0.0F, 0.0F);
+        }
+    }
+
+    private static float ease(double value, double start, double end) {
+        if (value <= start) return 0.0F;
+        if (value >= end) return 1.0F;
+        float t = (float) ((value - start) / (end - start));
+        return t * t * (3.0F - 2.0F * t);
+    }
+
+    private static double ageSeconds(long startedAt) {
+        return startedAt == 0L ? -1.0 : (System.nanoTime() - startedAt) / 1_000_000_000.0;
     }
 
     private static int fallbackColor(String material) {
