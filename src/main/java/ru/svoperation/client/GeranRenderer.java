@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.Mth;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -37,6 +38,9 @@ public final class GeranRenderer extends EntityRenderer<GeranEntity> {
             poseStack.translate(0.0D, 0.12D, 0.0D);
             poseStack.mulPose(Axis.YP.rotationDegrees(-entityYaw));
             poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+            // Smoothly follow the server-synchronized flight pitch instead of staying level.
+            float pitch = Mth.rotLerp(partialTick, entity.xRotO, entity.getXRot());
+            poseStack.mulPose(Axis.XP.rotationDegrees(-pitch));
             poseStack.scale(0.72F, 0.72F, 0.72F);
             for (ObjModel.MeshPart part : model.parts()) {
                 ObjModel.Material material = model.materials().get(part.material());
