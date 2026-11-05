@@ -28,12 +28,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.8'
-      - name: Ensure audio conversion tools
+      - name: Install audio conversion tools
         run: |
-          if ! command -v ffmpeg >/dev/null 2>&1; then
-            sudo apt-get install -y ffmpeg
-          fi
-          ffmpeg -version | head -n 1
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
       - name: Prepare CC0 audio assets
         run: bash scripts/prepare-audio.sh
       - name: Build

@@ -22,12 +22,12 @@ import ru.svoperation.registry.SVItems;
 import ru.svoperation.registry.SVSounds;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.object.PlayState;
-import software.bernie.geckolib.renderer.GeoRenderProvider;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animatable.client.GeoRenderProvider;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -39,16 +39,23 @@ public final class SV01RifleItem extends Item implements GeoItem {
     private static final RawAnimation FIRE_ANIMATION = RawAnimation.begin().thenPlay("animation.sv01.fire");
     private static final RawAnimation RELOAD_ANIMATION = RawAnimation.begin().thenPlay("animation.sv01.reload");
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+
     public SV01RifleItem(Properties properties) {
         super(properties);
         SingletonGeoAnimatable.registerSyncedAnimatable(this);
     }
-    @Override public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "weapon", 0, state -> PlayState.STOP)
-                .triggerableAnim("fire", FIRE_ANIMATION).triggerableAnim("reload", RELOAD_ANIMATION));
+                .triggerableAnim("fire", FIRE_ANIMATION)
+                .triggerableAnim("reload", RELOAD_ANIMATION));
     }
+
     @Override public AnimatableInstanceCache getAnimatableInstanceCache() { return cache; }
-    @Override public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
+
+    @Override
+    public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
         consumer.accept(new GeoRenderProvider() {
             private SV01RifleRenderer renderer;
             @Override public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
@@ -57,7 +64,9 @@ public final class SV01RifleItem extends Item implements GeoItem {
             }
         });
     }
-    @Override public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack rifle = player.getItemInHand(hand);
         if (!player.getAbilities().instabuild && !hasAmmo(player)) return InteractionResultHolder.fail(rifle);
         if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
@@ -68,11 +77,13 @@ public final class SV01RifleItem extends Item implements GeoItem {
         }
         return InteractionResultHolder.sidedSuccess(rifle, level.isClientSide);
     }
+
     private static boolean hasAmmo(Player player) {
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++)
             if (player.getInventory().getItem(slot).is(SVItems.RIFLE_AMMO.get())) return true;
         return false;
     }
+
     private static boolean consumeAmmo(Player player) {
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
             ItemStack stack = player.getInventory().getItem(slot);
@@ -80,6 +91,7 @@ public final class SV01RifleItem extends Item implements GeoItem {
         }
         return false;
     }
+
     private void fire(ServerLevel level, Player player) {
         Vec3 start = player.getEyePosition();
         Vec3 maxEnd = start.add(player.getLookAngle().scale(RANGE));
