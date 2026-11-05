@@ -12,7 +12,9 @@ REQUIRED = {
 "ru/svoperation/model/SV01RifleModel.class",
 "assets/svoperation/geo/sv01.geo.json","assets/svoperation/animations/sv01.animation.json",
 "assets/svoperation/models/obj/sv01.obj","assets/svoperation/models/obj/sv01.mtl",
-"assets/svoperation/textures/item/sv01.png","assets/svoperation/models/item/sv01.json",
+"assets/svoperation/textures/item/sv01.png",
+"assets/svoperation/textures/item/sv01_metal.png","assets/svoperation/textures/item/sv01_polymer.png","assets/svoperation/textures/item/sv01_detail.png",
+"assets/svoperation/models/item/sv01.json",
 "assets/svoperation/sounds.json","assets/svoperation/lang/ru_ru.json","assets/svoperation/lang/en_us.json",
 "assets/svoperation/sounds/sv01/fire_01.ogg","assets/svoperation/sounds/sv01/fire_02.ogg",
 "assets/svoperation/sounds/sv01/reload.ogg","assets/svoperation/sounds/sv01/bolt.ogg",
@@ -49,9 +51,11 @@ def main():
         if "usemtl metal" not in obj or "usemtl polymer" not in obj or "usemtl detail" not in obj:
             fail("packaged OBJ material groups are missing")
         mtl = jar.read("assets/svoperation/models/obj/sv01.mtl").decode("utf-8")
-        for material in ("metal", "polymer", "detail"):
+        for material, texture in (("metal", "sv01_metal.png"), ("polymer", "sv01_polymer.png"), ("detail", "sv01_detail.png")):
             if f"newmtl {material}" not in mtl:
                 fail(f"MTL material is missing: {material}")
+            if f"map_Kd {texture}" not in mtl:
+                fail(f"MTL diffuse map is missing for {material}: {texture}")
         if len(re.findall(r"^Kd\s+", mtl, re.MULTILINE)) < 3:
             fail("MTL diffuse color definitions are incomplete")
         geo = read_json(jar, "assets/svoperation/geo/sv01.geo.json")
@@ -77,7 +81,14 @@ def main():
         if not png.startswith(b"\x89PNG\r\n\x1a\n") or len(png) < 24:
             fail("weapon texture is not a valid PNG")
         if struct.unpack(">II", png[16:24]) != (512, 512):
-            fail("weapon texture must be 512x512")
+            fail("legacy fallback weapon texture must be 512x512")
+        for material in ("metal", "polymer", "detail"):
+            texture_path = f"assets/svoperation/textures/item/sv01_{material}.png"
+            texture = jar.read(texture_path)
+            if not texture.startswith(b"\x89PNG\r\n\x1a\n") or len(texture) < 1024:
+                fail(f"{material} diffuse map is not a valid PNG")
+            if struct.unpack(">II", texture[16:24]) != (256, 256):
+                fail(f"{material} diffuse map must be 256x256")
         metadata = read_json(jar, "META-INF/jarjar/metadata.json")
         gecko = next((x for x in metadata.get("jars", [])
                       if x.get("identifier", {}).get("group") == "software.bernie.geckolib"), None)
