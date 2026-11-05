@@ -164,7 +164,7 @@ tasks.register('generateWeaponTextures') {
     long hash = (((long) x) * 73856093L) ^ (((long) y) * 19349663L) ^ 0x6A09E667F3BCC909L
     hash ^= (hash >>> 13); hash *= 1274126177L
     int noise = (int)((hash >>> 24) & 0xFFL) - 128
-    int cell = ((x / 32) + (y / 32) * 3) % 7
+    int cell = (x.intdiv(32) + y.intdiv(32) * 3) % 7
     int camo = [0, 3, -2, 5, -4, 1, -1][cell]
     int seam = ((x % 128 == 0 || y % 128 == 0) ? -10 : 0) + ((x % 128 == 1 || y % 128 == 1) ? 3 : 0)
     int panel = ((x % 128 > 4 && x % 128 < 7) && (y % 128 > 4 && y % 128 < 7)) ? -14 : 0
