@@ -44,7 +44,6 @@ dependencies {
  }
 }
 tasks.named('jar', Jar).configure { archiveClassifier.set('slim') }
-tasks.named('jarJar').configure { finalizedBy('reobfJarJar') }
 tasks.named('assemble').configure { dependsOn(tasks.named('jarJar')) }
 tasks.named('processResources', ProcessResources).configure {
  var replaceProperties = [
