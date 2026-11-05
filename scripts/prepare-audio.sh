@@ -25,10 +25,11 @@ generate_original_fallbacks() {
   done
 }
 
-if ! download_and_convert "https://sfxmint.com/dl/impact-gunshot-08.wav" "fire_01"; then
+if download_and_convert "https://sfxmint.com/dl/impact-gunshot-08.wav" "fire_01" \
+  && download_and_convert "https://sfxmint.com/dl/impact-gunshot-16.wav" "fire_02" \
+  && download_and_convert "https://sfxmint.com/dl/mechanical-reload-14.wav" "reload" \
+  && download_and_convert "https://sfxmint.com/dl/gun-cocking-03.wav" "bolt"; then
+  echo "External sound assets downloaded and converted."
+else
   generate_original_fallbacks
-  exit 0
 fi
-download_and_convert "https://sfxmint.com/dl/impact-gunshot-16.wav" "fire_02"
-download_and_convert "https://sfxmint.com/dl/mechanical-reload-14.wav" "reload"
-download_and_convert "https://sfxmint.com/dl/gun-cocking-03.wav" "bolt"
