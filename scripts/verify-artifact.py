@@ -10,6 +10,7 @@ REQUIRED = {
 "ru/svoperation/client/SV01RifleRenderer.class","ru/svoperation/client/SVClientEvents.class",
 "ru/svoperation/model/SV01RifleModel.class",
 "assets/svoperation/geo/sv01.geo.json","assets/svoperation/animations/sv01.animation.json",
+"assets/svoperation/models/obj/sv01.obj","assets/svoperation/models/obj/sv01.mtl",
 "assets/svoperation/textures/item/sv01.png","assets/svoperation/models/item/sv01.json",
 "assets/svoperation/sounds.json","assets/svoperation/lang/ru_ru.json","assets/svoperation/lang/en_us.json",
 "assets/svoperation/sounds/sv01/fire_01.ogg","assets/svoperation/sounds/sv01/fire_02.ogg",
@@ -41,6 +42,11 @@ def main():
             fail("mods.toml does not declare svoperation")
         if not re.search(r'modId="geckolib"\s*\n\s*mandatory=true', mods):
             fail("mods.toml does not declare mandatory GeckoLib dependency")
+        obj = jar.read("assets/svoperation/models/obj/sv01.obj").decode("utf-8")
+        if sum(1 for line in obj.splitlines() if line.startswith("f ")) < 100:
+            fail("packaged OBJ weapon mesh has insufficient polygon geometry")
+        if "usemtl metal" not in obj or "usemtl polymer" not in obj:
+            fail("packaged OBJ material groups are missing")
         geo = read_json(jar, "assets/svoperation/geo/sv01.geo.json")
         geometry = geo.get("minecraft:geometry", [])
         if not geometry or not geometry[0].get("bones"):

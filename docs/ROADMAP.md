@@ -1,32 +1,16 @@
-# SVOperation Roadmap
+# SVOperation — roadmap
 
-## Stage 0 — Foundation
-- [x] Forge 1.21.1 / Java 21 project scaffold
-- [x] GitHub Actions build pipeline
-- [x] Initial mod JAR build
+## Current vertical slice
 
-## Stage 1 — First playable slice
-- [x] SV-01 rifle and ammunition
-- [x] Creative tab and RU/EN localization
-- [x] Server-authoritative hitscan, block obstruction, ammo consumption and cooldown
+- [x] Forge 1.21.1 / Java 21 build pipeline
+- [x] SV-01 gameplay prototype and audio packaging
+- [x] OBJ mesh parser foundation (positions, UVs, normals, groups, materials, triangulation)
+- [x] Original polygonal SV-01 OBJ source asset
+- [ ] Forge client OBJ renderer and GPU buffer lifecycle
+- [ ] MTL/material and texture binding
+- [ ] Separate moving parts with named pivots
+- [ ] First-person weapon presentation and two-hand arm rig
+- [ ] Third-person pose and offhand validation
+- [ ] Client runtime smoke test and packaged JAR verification
 
-## Stage 2 — SV-01 visual and audio prototype
-- [x] GeckoLib 4.8.3 Jar-in-Jar integration
-- [x] Rigged multi-bone 3D geometry and custom texture atlas
-- [x] Fire recoil and reload animation clips
-- [x] Sound events and CC0 audio preparation pipeline
-- [ ] Verify first/third-person model positioning in Minecraft
-- [ ] Listen to and balance sounds in-game
-- [ ] Connect reload animation and sound to magazine mechanics
-- [ ] Final Blockbench art pass
-
-## Stage 3 — Combat foundations
-- [ ] Magazines, reload mechanics, recoil and aiming
-- [ ] Additional weapons and attachments
-- [ ] Armor and equipment
-
-## Stage 4 — World and scenarios
-- [ ] NPC factions and behavior
-- [ ] Vehicles and transport
-- [ ] Maps, objectives and scenarios
-- [ ] Dedicated-server networking and compatibility tests
+CI success proves compilation and static artifact checks only; it does not prove in-game rendering.

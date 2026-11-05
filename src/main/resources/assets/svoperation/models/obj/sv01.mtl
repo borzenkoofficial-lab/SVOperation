@@ -1,0 +1,11 @@
+newmtl metal
+Kd 0.22 0.24 0.25
+Ns 80
+
+newmtl polymer
+Kd 0.10 0.11 0.12
+Ns 24
+
+newmtl detail
+Kd 0.38 0.40 0.41
+Ns 48
