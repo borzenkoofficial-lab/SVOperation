@@ -49,8 +49,8 @@ def main():
         if cube_count < 30:
             fail(f"weapon geometry is too simple: {cube_count} cubes (minimum 30)")
         animations = read_json(jar, "assets/svoperation/animations/sv01.animation.json").get("animations", {})
-        if not {"animation.sv01.fire", "animation.sv01.reload"}.issubset(animations):
-            fail("fire/reload animation clips are missing")
+        if not {"animation.sv01.aim", "animation.sv01.fire", "animation.sv01.reload"}.issubset(animations):
+            fail("aim/fire/reload animation clips are missing")
         item_model = read_json(jar, "assets/svoperation/models/item/sv01.json")
         display = item_model.get("display", {})
         if not {"firstperson_righthand", "thirdperson_righthand"}.issubset(display):

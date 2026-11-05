@@ -4,11 +4,14 @@ Minecraft Forge mod project for Minecraft Java Edition 1.21.1.
 
 ## Development build 0.2.0
 
-The SV-01 prototype includes a rifle item, ammunition, Russian and English localization, server-authoritative hitscan firing, a GeckoLib rigged 3D item model with separated receiver, bolt, magazine, trigger and optic bones, a custom texture atlas, fire/reload animation clips, and sound event definitions.
+SV-01 is a modern rifle prototype with a detailed GeckoLib geometry atlas, a 512×512 material texture, a separate animated bolt and magazine, two-handed third-person stance, first-person aiming pose, shoulder/aim sway, recoil and reload animation clips. Firing is server-authoritative hitscan. The item uses GeckoLib 4.8.3 embedded through Forge Jar-in-Jar, so installation remains a single SVOperation JAR.
 
-GeckoLib 4.8.3 is embedded using Forge Jar-in-Jar, so the intended installation remains a single SVOperation JAR. CI prepares CC0 sound assets and packages them into the mod.
+The current model is a custom in-mod game asset, not a scanned or imported real-world CAD/Blender firearm. It is an improved high-detail Minecraft model and still needs visual tuning in an actual Forge client.
 
-The model and sounds still require in-game visual and audio tuning. Compilation alone does not prove final presentation quality.
+## Controls
+- Hold right mouse button: shoulder and aim.
+- Release right mouse button: fire one shot.
+- Shift + right mouse button: reload from rifle ammunition in inventory.
 
 ## Requirements
 - Minecraft Java Edition 1.21.1

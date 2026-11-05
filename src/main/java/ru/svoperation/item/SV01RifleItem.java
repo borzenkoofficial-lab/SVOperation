@@ -39,6 +39,7 @@ public final class SV01RifleItem extends Item implements GeoItem {
  private static final double RANGE = 48.0D;
  private static final float DAMAGE = 7.0F;
  private static final int COOLDOWN_TICKS = 10;
+ private static final RawAnimation AIM_ANIMATION = RawAnimation.begin().thenLoop("animation.sv01.aim");
  private static final RawAnimation FIRE_ANIMATION = RawAnimation.begin().thenPlay("animation.sv01.fire");
  private static final RawAnimation RELOAD_ANIMATION = RawAnimation.begin().thenPlay("animation.sv01.reload");
  private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -51,6 +52,7 @@ public final class SV01RifleItem extends Item implements GeoItem {
  @Override
  public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
   controllers.add(new AnimationController<>(this, "weapon", 0, state -> PlayState.STOP)
+   .triggerableAnim("aim", AIM_ANIMATION)
    .triggerableAnim("fire", FIRE_ANIMATION)
    .triggerableAnim("reload", RELOAD_ANIMATION));
  }
@@ -90,6 +92,9 @@ public final class SV01RifleItem extends Item implements GeoItem {
 
   // Hold right mouse to shoulder the rifle; releasing it fires one shot.
   player.startUsingItem(hand);
+  if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
+   triggerAnim(player, GeoItem.getOrAssignId(rifle, serverLevel), "weapon", "aim");
+  }
   return InteractionResultHolder.consume(rifle);
  }
 
