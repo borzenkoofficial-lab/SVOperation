@@ -52,7 +52,7 @@ def main():
         for material in ("metal", "polymer", "detail"):
             if f"newmtl {material}" not in mtl:
                 fail(f"MTL material is missing: {material}")
-        if len(re.findall(r"^Kd\\s+", mtl, re.MULTILINE)) < 3:
+        if len(re.findall(r"^Kd\s+", mtl, re.MULTILINE)) < 3:
             fail("MTL diffuse color definitions are incomplete")
         geo = read_json(jar, "assets/svoperation/geo/sv01.geo.json")
         geometry = geo.get("minecraft:geometry", [])
