@@ -136,7 +136,7 @@ def main():
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     Path(str(path) + ".sha256").write_text(f"{digest}  {path.name}\n", encoding="ascii")
     print(f"Verified {path.name}: {path.stat().st_size} bytes")
-    print(f"Verified {len(REQUIRED)} required entries, weapon and Geran geometry, transforms, classes, Jar-in-Jar, JSON, texture and Vorbis audio")
+    print(f"Verified {len(REQUIRED)} required entries, weapon and Geran geometry, Geran 512x512 texture, transforms, classes, Jar-in-Jar, JSON and Vorbis audio")
     print("SHA-256: " + digest)
 
 if __name__ == "__main__":
