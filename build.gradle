@@ -125,7 +125,8 @@ tasks.register('generateWeaponTextures') {
       b = base + 2 + groove + (int)(noise * 0.04D + wave)
      }
      r = Math.max(0, Math.min(255, r)); g = Math.max(0, Math.min(255, g)); b = Math.max(0, Math.min(255, b))
-     image.setRGB(x, y, (0xFF << 24) | (r << 16) | (g << 8) | b)
+     int argb = (int) (0xFF000000L | ((long) r << 16) | ((long) g << 8) | (long) b)
+     image.setRGB(x, y, argb)
     }
    }
    // Blend opposite borders so repeated UV edges do not produce a hard seam.
@@ -139,10 +140,12 @@ tasks.register('generateWeaponTextures') {
      int tr = (((top >>> 16) & 255) + ((bottom >>> 16) & 255)) / 2
      int tg = (((top >>> 8) & 255) + ((bottom >>> 8) & 255)) / 2
      int tb = ((top & 255) + (bottom & 255)) / 2
-     image.setRGB(k, i, 0xFF000000 | (lr << 16) | (lg << 8) | lb)
-     image.setRGB(size - 1 - k, i, 0xFF000000 | (lr << 16) | (lg << 8) | lb)
-     image.setRGB(i, k, 0xFF000000 | (tr << 16) | (tg << 8) | tb)
-     image.setRGB(i, size - 1 - k, 0xFF000000 | (tr << 16) | (tg << 8) | tb)
+     int lrArgb = (int) (0xFF000000L | ((long) lr << 16) | ((long) lg << 8) | (long) lb)
+     int tbArgb = (int) (0xFF000000L | ((long) tr << 16) | ((long) tg << 8) | (long) tb)
+     image.setRGB(k, i, lrArgb)
+     image.setRGB(size - 1 - k, i, lrArgb)
+     image.setRGB(i, k, tbArgb)
+     image.setRGB(i, size - 1 - k, tbArgb)
     }
    }
    javax.imageio.ImageIO.write(image, 'png', new File(outputDir, "sv01_${kind}.png"))
